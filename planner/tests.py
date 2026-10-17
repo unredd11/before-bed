@@ -1,6 +1,8 @@
 from datetime import timedelta,time
 from unittest.mock import patch
-from django.test import TestCase,Client
+from django.test import TestCase,Client,override_settings
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
@@ -63,12 +65,46 @@ class BeforeBedTests(TestCase):
     @patch('planner.integrations.weather',return_value={'time':['2026-10-15'],'temperature_2m_max':[28],'precipitation_probability_max':[60]})
     def test_weather_success(self,mock):
         self.assertContains(self.client.get(reverse('weather')),'60%')
-    @patch('planner.integrations.send_plan',return_value={'id':'example'})
-    def test_email_sends_current_user_plan(self,mock):
-        self.user.email='student@example.com'; self.user.save()
-        self.client.post(reverse('plan_email'))
-        self.assertEqual(mock.call_args.args[0],'student@example.com')
-        self.assertIn('Prepare slides',mock.call_args.args[1])
+    @patch('planner.integrations.geocode_city',return_value={'name':'Taipei','admin1':'Taiwan','country':'Taiwan','latitude':25.0478,'longitude':121.5319})
+    def test_city_lookup_updates_weather_coordinates(self,mock):
+        response=self.client.post(reverse('city_lookup'),{'city_query':'Taipei, Taiwan'})
+        self.assertRedirects(response,reverse('profile'))
+        profile=Profile.objects.get(user=self.user)
+        self.assertEqual(profile.city,'Taipei, Taiwan')
+        self.assertEqual(profile.latitude,25.0478)
+        self.assertEqual(profile.longitude,121.5319)
+        mock.assert_called_once_with('Taipei, Taiwan')
+    @patch('planner.integrations.geocode_city',side_effect=IntegrationError('No matching city was found.'))
+    def test_city_lookup_failure_keeps_saved_location(self,mock):
+        profile=Profile.objects.create(user=self.user,city='Existing City',latitude=1,longitude=2)
+        self.client.post(reverse('city_lookup'),{'city_query':'Unknown'})
+        profile.refresh_from_db()
+        self.assertEqual(profile.city,'Existing City')
+    def test_plan_downloads(self):
+        profile,_=Profile.objects.get_or_create(user=self.user)
+        profile.bedtime=(timezone.localtime()+timedelta(hours=2)).time()
+        profile.save(update_fields=['bedtime'])
+        text_response=self.client.get(reverse('plan_download'))
+        self.assertEqual(text_response.status_code,200)
+        self.assertEqual(text_response['Content-Type'],'text/plain; charset=utf-8')
+        self.assertContains(text_response,'Prepare slides')
+        calendar_response=self.client.get(reverse('plan_calendar'))
+        self.assertEqual(calendar_response.status_code,200)
+        self.assertIn('text/calendar',calendar_response['Content-Type'])
+        self.assertContains(calendar_response,'BEGIN:VCALENDAR')
+        self.assertContains(calendar_response,'SUMMARY:Prepare slides')
+        self.assertContains(self.client.get(reverse('plan_print')),'Print this plan')
+    def test_photo_is_stored_locally_and_deleted_with_task(self):
+        media_root=settings.BASE_DIR/'test_media'
+        with override_settings(MEDIA_ROOT=media_root):
+            photo=SimpleUploadedFile('notes.png',b'example image bytes',content_type='image/png')
+            self.client.post(reverse('photo',args=[self.task.pk]),{'photo':photo})
+            self.task.refresh_from_db()
+            self.assertTrue(self.task.photo_url.name.startswith('task_photos/'))
+            storage=self.task.photo_url.storage; name=self.task.photo_url.name
+            self.assertTrue(storage.exists(name))
+            self.task.delete()
+            self.assertFalse(storage.exists(name))
     def test_oauth_rejects_invalid_state(self):
         self.assertRedirects(self.client.get(reverse('google_callback'),{'state':'bad','code':'bad'}),reverse('login'))
     def test_registration(self):

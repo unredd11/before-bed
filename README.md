@@ -16,6 +16,18 @@ python -m venv .venv
 
 Open http://localhost:8000/ and register a student account. The superuser can use the Admin overview and `/admin/`. No shared passwords or seeded users are included.
 
+If the included `.venv` points to a Python installation from another computer or Windows account, rename it and create a fresh one:
+
+```powershell
+Rename-Item .venv .venv-broken
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe manage.py migrate
+.\.venv\Scripts\python.exe manage.py test planner
+```
+
+After confirming the new environment works, you can remove `.venv-broken`. Virtual environments are machine-specific and should never be copied or committed.
+
 ## Implemented features
 
 - Registration, login, logout, and student/staff roles.
@@ -23,22 +35,26 @@ Open http://localhost:8000/ and register a student account. The superuser can us
 - Bedtime planner with an explainable schedule and reasons for tasks that do not fit.
 - Morning packing checklist.
 - Manual sleep diary with validated bedtime/wake-up times.
+- Local reference-photo uploads (no paid storage service).
+- Printable plans, plain-text downloads, and `.ics` calendar downloads.
 - Staff aggregate dashboard and Django administration.
 - Responsive pages, CSRF protection, and record ownership checks.
 
 The planner starts now and uses the next occurrence of the chosen bedtime, including after midnight. It orders by earliest deadline, with priority for ties, and schedules only tasks that fit their deadline and bedtime. It is a greedy planner, not an optimal schedule. Skipped tasks remain active; they are not automatically postponed. This app does not track sleep automatically or provide medical recommendations.
 
-## Five external integrations
+## Free integrations and exports
 
 | Service | Action | Required setup |
 | --- | --- | --- |
 | Google OAuth / OpenID userinfo | Sign in or link an existing account | Client ID, secret, callback URI |
 | Google Calendar API | Read events for the next two days | Enable API and grant read-only access |
+| Open-Meteo Geocoding API | Convert a city search into coordinates | No key |
 | Open-Meteo | Morning weather forecast | Saved coordinates; no key |
-| Cloudinary Upload API | Attach task reference photos | Cloud name, key, secret |
-| Resend Email API | Email the current plan on demand | Key and permitted sender |
+| Local Django media storage | Attach task reference photos | No account or API key |
+| Text and print export | Save or print the current plan | No account or API key |
+| iCalendar export | Import the plan into a calendar app | No account or API key |
 
-Request paths are implemented, but credentialed services have not been tested live. Local accounts and core features work independently. Confirm your instructor counts Google Identity and Google Calendar as separate APIs. Fonts and local libraries do not count.
+Google remains optional. Local accounts, uploads, plan downloads, and calendar-file exports work without paid APIs or external credentials.
 
 ### Environment configuration
 
@@ -57,21 +73,15 @@ References: [Google OAuth](https://developers.google.com/identity/protocols/oaut
 
 ### Weather
 
-Set your coordinates in My routine. Defaults are Singapore coordinates. City text is a display label, not a location lookup. Open Morning weather to request a forecast; failures do not prevent local features from working.
+Open **My routine** and search for a city or postal code. The Open-Meteo Geocoding API saves the first matching place and its coordinates; include the country name to make the result more precise. You can also enter coordinates manually. Open **Morning weather** to request a forecast; failures do not prevent local features from working.
 
-Data and usage terms: [Open-Meteo](https://open-meteo.com/). Attribution is displayed in the app.
+Data and usage terms: [Open-Meteo](https://open-meteo.com/). Geocoding location data is based on GeoNames. Attribution is displayed in the app.
 
-### Photos
+### Local photos and plan exports
 
-Set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`. Expand Attach a reference photo on a task. JPEG, PNG, and WebP uploads are limited to 5 MB and signed server-side. Photos use public URLs; use non-sensitive reference material. Deleting a task does not delete its remote asset; asset cleanup is a future enhancement.
+Expand **Attach a reference photo** on a task. JPEG, PNG, and WebP uploads are limited to 5 MB and saved under `media/task_photos/`. Replacing a photo or deleting its task removes the old file. Do not commit the `media/` directory.
 
-Reference: [Cloudinary uploads](https://cloudinary.com/documentation/upload_images).
-
-### Email
-
-Set `RESEND_API_KEY` and `RESEND_FROM`. Save a recipient email in My routine and select Email this plan. Test senders may restrict recipients; arbitrary recipients require a verified sending domain. Sending is on demand; scheduled reminders are not implemented.
-
-Reference: [Resend email API](https://resend.com/docs/api-reference/emails/send-email).
+Use **Print plan** for the browser print dialog, **Download text** for a portable text copy, or **Download calendar** for an `.ics` file. Open the `.ics` file with Google Calendar, Outlook, Apple Calendar, or another compatible calendar application.
 
 ## Verification
 
@@ -80,7 +90,7 @@ python manage.py check
 python manage.py test planner
 ```
 
-Tests cover task CRUD, ownership, CSRF, staff permissions, midnight scheduling, expired deadlines, sleep validation, registration, and mocked weather/email behavior. Mocked responses do not validate live accounts. Browser visual QA and live OAuth/upload/email tests remain necessary.
+Tests cover task CRUD, ownership, CSRF, staff permissions, midnight scheduling, expired deadlines, sleep validation, registration, weather behavior, local photo cleanup, and plan/calendar downloads. Browser visual QA and live Google OAuth tests remain necessary.
 
 ## Code map
 

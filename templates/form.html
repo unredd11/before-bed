@@ -1,1 +1,41 @@
-{% extends 'base.html' %}{% block content %}<section class="card formcard"><p class="eyebrow">YOUR SPACE TO PREPARE</p><h1>{{ title|default:'Sign in' }}</h1><form method="post">{% csrf_token %}{{ form.as_p }}<button type="submit">Save & continue</button></form>{% if request.resolver_match.url_name == 'login' %}<p>New here? <a href="{% url 'register' %}">Create an account</a></p><p><a href="{% url 'google_start' %}">Sign in with Google</a></p>{% endif %}{% if email_edit %}<hr><h2>Notification email</h2><form method="post" action="{% url 'email_edit' %}">{% csrf_token %}<label for="email">Email address</label><input id="email" type="email" name="email" value="{{ user.email }}" required><button>Save email</button></form><p>Coordinates control the weather location. Change the Singapore defaults to your own location.</p>{% endif %}</section>{% endblock %}
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="card formcard">
+  <p class="eyebrow">YOUR SPACE TO PREPARE</p>
+  <h1>{{ title|default:'Sign in' }}</h1>
+
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save & continue</button>
+  </form>
+
+  {% if request.resolver_match.url_name == 'login' %}
+    <p>New here? <a href="{% url 'register' %}">Create an account</a></p>
+    <p><a href="{% url 'google_start' %}">Sign in with Google</a></p>
+  {% endif %}
+
+  {% if email_edit %}
+    <hr>
+    <h2>Find your city</h2>
+    <p>Search by city or postal code. Add the country for better accuracy, such as <em>Taipei, Taiwan</em>.</p>
+    <form method="post" action="{% url 'city_lookup' %}">
+      {% csrf_token %}
+      <label for="city_query">City or postal code</label>
+      <input id="city_query" name="city_query" type="search" placeholder="Taipei, Taiwan" minlength="2" required>
+      <button>Find and use this city</button>
+    </form>
+    <p class="muted">The free Open-Meteo Geocoding API fills in the city, latitude, and longitude fields above.</p>
+    <hr>
+    <h2>Notification email</h2>
+    <form method="post" action="{% url 'email_edit' %}">
+      {% csrf_token %}
+      <label for="email">Email address</label>
+      <input id="email" type="email" name="email" value="{{ user.email }}" required>
+      <button>Save email</button>
+    </form>
+    <p>Coordinates control the weather location. You can still edit them manually above.</p>
+  {% endif %}
+</section>
+{% endblock %}

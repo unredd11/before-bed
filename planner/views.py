@@ -1,4 +1,8 @@
 import os,secrets,urllib.parse,json
+from datetime import timezone as datetime_timezone
+from pathlib import Path
+from django.http import HttpResponse
+from django.utils import timezone
 from django.shortcuts import render,redirect,get_object_or_404
 from django.contrib.auth import login,get_user_model
 from django.contrib.auth.decorators import login_required,user_passes_test
@@ -45,6 +49,20 @@ def profile_edit(request):
     return render(request,'form.html',{'form':form,'title':'Your routine and location','email_edit':True})
 @login_required
 @require_POST
+def city_lookup(request):
+    profile,_=Profile.objects.get_or_create(user=request.user)
+    try:
+        place=api.geocode_city(request.POST.get('city_query',''))
+        parts=[place.get('name'),place.get('admin1'),place.get('country')]
+        profile.city=', '.join(dict.fromkeys(part for part in parts if part))
+        profile.latitude=place['latitude']; profile.longitude=place['longitude']
+        profile.save(update_fields=['city','latitude','longitude'])
+        messages.success(request,f"Location updated to {profile.city}.")
+    except api.IntegrationError as exc:
+        messages.error(request,str(exc))
+    return redirect('profile')
+@login_required
+@require_POST
 def email_edit(request):
     from django.core.validators import validate_email
     from django.core.exceptions import ValidationError
@@ -82,20 +100,44 @@ def checklist_action(request,pk,action):
 @require_POST
 def photo_upload(request,pk):
     task=get_object_or_404(Task,pk=pk,user=request.user); file=request.FILES.get('photo')
-    if not file or file.size>5*1024*1024 or file.content_type not in ['image/jpeg','image/png','image/webp']:
+    allowed_extensions={'.jpg','.jpeg','.png','.webp'}
+    if not file or file.size>5*1024*1024 or file.content_type not in ['image/jpeg','image/png','image/webp'] or Path(file.name).suffix.lower() not in allowed_extensions:
         messages.error(request,'Choose a JPEG, PNG, or WebP image under 5 MB.'); return redirect('dashboard')
-    try: task.photo_url=api.upload_photo(file); task.save(update_fields=['photo_url']); messages.success(request,'Photo attached.')
-    except api.IntegrationError as exc: messages.error(request,str(exc))
+    task.photo_url=file; task.save(update_fields=['photo_url']); messages.success(request,'Photo stored locally.')
     return redirect('dashboard')
 @login_required
-@require_POST
-def plan_email(request):
+def plan_print(request):
     profile,_=Profile.objects.get_or_create(user=request.user)
     plan=make_plan(Task.objects.filter(user=request.user,completed=False),profile.bedtime)
-    body='Bedtime target: '+str(plan['target'])+'\n\nTonight:\n'+'\n'.join(f"{row['task'].title} ({row['task'].minutes} minutes)" for row in plan['tonight'])+'\n\nNeeds a decision:\n'+'\n'.join(f"{row['task'].title}: {row['reason']}" for row in plan['later'])
-    try: api.send_plan(request.user.email,body); messages.success(request,'Plan sent to your email.')
-    except api.IntegrationError as exc: messages.error(request,str(exc))
-    return redirect('dashboard')
+    return render(request,'plan_print.html',{'plan':plan})
+def _plan_text(plan):
+    tonight='\n'.join(f"- {row['start']:%I:%M %p}–{row['end']:%I:%M %p}: {row['task'].title} ({row['task'].minutes} minutes)" for row in plan['tonight']) or '- No tasks scheduled.'
+    later='\n'.join(f"- {row['task'].title}: {row['reason']}" for row in plan['later']) or '- None.'
+    return f"BeforeBed plan\nBedtime target: {plan['target']:%A, %B %d at %I:%M %p}\n\nTonight\n{tonight}\n\nNeeds a decision\n{later}\n"
+@login_required
+def plan_download(request):
+    profile,_=Profile.objects.get_or_create(user=request.user)
+    plan=make_plan(Task.objects.filter(user=request.user,completed=False),profile.bedtime)
+    response=HttpResponse(_plan_text(plan),content_type='text/plain; charset=utf-8')
+    response['Content-Disposition']='attachment; filename="beforebed-plan.txt"'
+    return response
+def _ics_escape(value):
+    return str(value).replace('\\','\\\\').replace('\n','\\n').replace(',','\\,').replace(';','\\;')
+def _ics_time(value):
+    return value.astimezone(datetime_timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+@login_required
+def plan_calendar(request):
+    profile,_=Profile.objects.get_or_create(user=request.user)
+    plan=make_plan(Task.objects.filter(user=request.user,completed=False),profile.bedtime)
+    lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//BeforeBed//Evening Planner//EN','CALSCALE:GREGORIAN']
+    stamp=_ics_time(timezone.now())
+    for row in plan['tonight']:
+        task=row['task']
+        lines += ['BEGIN:VEVENT',f'UID:task-{task.pk}-{row["start"]:%Y%m%d}@beforebed',f'DTSTAMP:{stamp}',f'DTSTART:{_ics_time(row["start"])}',f'DTEND:{_ics_time(row["end"])}',f'SUMMARY:{_ics_escape(task.title)}',f'DESCRIPTION:{_ics_escape("Planned by BeforeBed. Due " + task.deadline.isoformat())}','END:VEVENT']
+    lines.append('END:VCALENDAR')
+    response=HttpResponse('\r\n'.join(lines)+'\r\n',content_type='text/calendar; charset=utf-8')
+    response['Content-Disposition']='attachment; filename="beforebed-plan.ics"'
+    return response
 @login_required
 def weather(request):
     profile,_=Profile.objects.get_or_create(user=request.user)

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="print-actions"><a href="{% url 'dashboard' %}">← Back</a><button onclick="window.print()">Print this plan</button></div>
+<section class="card printable-plan">
+  <p class="eyebrow">BEFOREBED EVENING PLAN</p>
+  <h1>{{ plan.target|date:'l, F j' }}</h1>
+  <p>Bedtime target: <strong>{{ plan.target|date:'g:i A' }}</strong></p>
+  <h2>Tonight</h2>
+  {% for row in plan.tonight %}
+    <div class="print-row"><strong>{{ row.start|date:'g:i A' }}–{{ row.end|date:'g:i A' }}</strong><span>{{ row.task.title }} ({{ row.task.minutes }} minutes)</span></div>
+  {% empty %}<p>No tasks are scheduled.</p>{% endfor %}
+  <h2>Needs a decision</h2>
+  {% for row in plan.later %}<div class="print-row"><strong>{{ row.task.title }}</strong><span>{{ row.reason }}</span></div>{% empty %}<p>None.</p>{% endfor %}
+</section>
+{% endblock %}

@@ -1,1 +1,19 @@
-{% extends 'base.html' %}{% block content %}<section class="card formcard"><p class="eyebrow">PREPARE FOR YOUR MORNING</p><h1>Weather{% if profile.city %} in {{ profile.city }}{% endif %}</h1><p>Forecast for your saved coordinates: {{ profile.latitude }}, {{ profile.longitude }}.</p>{% for date,temp,rain in rows %}<div class="item"><strong>{{ date }}</strong><span>{{ temp }} °C maximum · {{ rain }}% maximum rain probability</span></div>{% endfor %}<p>Check the forecast before packing an umbrella or protecting paper documents.</p><small>Weather data: <a href="https://open-meteo.com/">Open-Meteo</a>. Forecasts can change.</small></section>{% endblock %}
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="card formcard">
+  <p class="eyebrow">PREPARE FOR YOUR MORNING</p>
+  <h1>Weather{% if profile.city %} in {{ profile.city }}{% endif %}</h1>
+  <p>Forecast for your saved coordinates: {{ profile.latitude }}, {{ profile.longitude }}.</p>
+
+  {% for date, temp, rain in rows %}
+    <div class="item">
+      <strong>{{ date }}</strong>
+      <span>{{ temp }} °C maximum · {{ rain }}% maximum rain probability</span>
+    </div>
+  {% endfor %}
+
+  <p>Check the forecast before packing an umbrella or protecting paper documents.</p>
+  <small>Weather data: <a href="https://open-meteo.com/">Open-Meteo</a>. Forecasts can change.</small>
+</section>
+{% endblock %}
