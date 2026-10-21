@@ -1,6 +1,22 @@
 import os
 from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load simple KEY=VALUE settings from a local .env file. Existing environment
+# variables take priority, which keeps hosting-platform configuration working.
+ENV_FILE = BASE_DIR / '.env'
+if ENV_FILE.exists():
+    existing_environment_keys = set(os.environ)
+    for raw_line in ENV_FILE.read_text(encoding='utf-8').splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        key, value = line.split('=', 1)
+        key = key.strip()
+        if key not in existing_environment_keys:
+            # If a key appears more than once in .env, the last entry wins.
+            os.environ[key] = value.strip().strip('"').strip("'")
+
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'local-development-only-change-before-deploying')
 DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
 if not DEBUG and SECRET_KEY == 'local-development-only-change-before-deploying':

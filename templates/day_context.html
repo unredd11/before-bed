@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="card formcard">
+  <p class="eyebrow">PLAN AROUND THE DAY</p>
+  <h1>Holiday context</h1>
+  <p>For {{ profile.city|default:'your saved location' }} ({{ profile.country_code }}).</p>
+  {% for error in errors %}<div class="notice">{{ error }}</div>{% endfor %}
+
+  <h2>Public holidays in the next 60 days</h2>
+  {% for holiday in holidays %}
+    <div class="item"><strong>{{ holiday.name }}</strong><span>{{ holiday.date }}</span></div>
+  {% empty %}<p class="muted">No public holidays were found in the next 60 days.</p>{% endfor %}
+
+  <small>Holiday data: Nager.Date.</small>
+</section>
+{% endblock %}

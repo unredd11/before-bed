@@ -42,32 +42,30 @@ After confirming the new environment works, you can remove `.venv-broken`. Virtu
 
 The planner starts now and uses the next occurrence of the chosen bedtime, including after midnight. It orders by earliest deadline, with priority for ties, and schedules only tasks that fit their deadline and bedtime. It is a greedy planner, not an optimal schedule. Skipped tasks remain active; they are not automatically postponed. This app does not track sleep automatically or provide medical recommendations.
 
-## Free integrations and exports
+## Five external APIs
 
-| Service | Action | Required setup |
+| API | Action | Required setup |
 | --- | --- | --- |
-| Google OAuth / OpenID userinfo | Sign in or link an existing account | Client ID, secret, callback URI |
-| Google Calendar API | Read events for the next two days | Enable API and grant read-only access |
-| Open-Meteo Geocoding API | Convert a city search into coordinates | No key |
-| Open-Meteo | Morning weather forecast | Saved coordinates; no key |
-| Local Django media storage | Attach task reference photos | No account or API key |
-| Text and print export | Save or print the current plan | No account or API key |
-| iCalendar export | Import the plan into a calendar app | No account or API key |
+| Google Calendar API | Read events and sync tonight's plan | Free OAuth client ID and secret |
+| Open-Meteo Forecast API | Show morning weather | No key |
+| Open-Meteo Geocoding API | Convert city searches into coordinates | No key |
+| Nager.Date API | Show upcoming public holidays | No key |
+| Resend Email API | Send task-plan and reminder emails | Free API key |
 
-Google remains optional. Local accounts, uploads, plan downloads, and calendar-file exports work without paid APIs or external credentials.
+Google OAuth/OpenID supplies Calendar authorization but is not counted separately in this conservative total. Local accounts, uploads, plan downloads, and calendar-file exports work without paid APIs or external credentials.
 
 ### Environment configuration
 
-`.env.example` lists settings. It is documentation, not an automatically loaded file. Set environment variables in the PowerShell session that starts Django or in your hosting platform. Keep credentials outside Git and do not paste them into chat.
+Copy `.env.example` to `.env`, then add your own Google client values. Django loads the local file automatically, and Git ignores it. Keep credentials outside Git and do not paste them into chat.
 
 ### Google
 
 1. Create a Google Cloud project and enable Google Calendar API.
 2. Configure OAuth consent in testing mode and add your account as a test user.
-3. Create a Web application OAuth client with the exact authorized redirect URI `http://localhost:8000/google/callback/`.
-4. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI`. Restart Django.
+3. Create a Web application OAuth client with the exact authorized redirect URI `http://127.0.0.1:8000/google/callback/`.
+4. Open `.env`, paste the client ID and secret after their matching names, and restart Django.
 5. Register locally, then select Connect Google to link your existing account. An unlinked Google login creates a separate account; matching email addresses do not automatically merge accounts.
-6. Grant identity and read-only event permissions. Tokens remain in the server-side Django session; reconnect after expiry. Automatic refresh is not implemented.
+6. Grant identity and Calendar event permissions. Use **Sync plan to Google Calendar** to create or update events for tasks under Fits tonight. Tokens remain in the server-side Django session; reconnect after expiry. Automatic refresh is not implemented.
 
 References: [Google OAuth](https://developers.google.com/identity/protocols/oauth2/web-server), [Calendar events](https://developers.google.com/workspace/calendar/api/v3/reference/events/list).
 
@@ -76,6 +74,14 @@ References: [Google OAuth](https://developers.google.com/identity/protocols/oaut
 Open **My routine** and search for a city or postal code. The Open-Meteo Geocoding API saves the first matching place and its coordinates; include the country name to make the result more precise. You can also enter coordinates manually. Open **Morning weather** to request a forecast; failures do not prevent local features from working.
 
 Data and usage terms: [Open-Meteo](https://open-meteo.com/). Geocoding location data is based on GeoNames. Attribution is displayed in the app.
+
+### Day context
+
+Open **Day context** to load public holidays for the next 60 days from Nager.Date. The two-letter country code in **My routine** controls the holiday country; city search fills it automatically.
+
+### Email reminder test
+
+Create a Resend API key and add it to `.env` as `RESEND_API_KEY`. During Resend testing, use the email address associated with your Resend account as the notification email under **My routine**. Select **Send test reminder** on the dashboard. The default sender is `onboarding@resend.dev`; sending to arbitrary recipients requires a verified sending domain.
 
 ### Local photos and plan exports
 

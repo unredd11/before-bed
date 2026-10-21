@@ -65,7 +65,7 @@ class BeforeBedTests(TestCase):
     @patch('planner.integrations.weather',return_value={'time':['2026-10-15'],'temperature_2m_max':[28],'precipitation_probability_max':[60]})
     def test_weather_success(self,mock):
         self.assertContains(self.client.get(reverse('weather')),'60%')
-    @patch('planner.integrations.geocode_city',return_value={'name':'Taipei','admin1':'Taiwan','country':'Taiwan','latitude':25.0478,'longitude':121.5319})
+    @patch('planner.integrations.geocode_city',return_value={'name':'Taipei','admin1':'Taiwan','country':'Taiwan','country_code':'TW','latitude':25.0478,'longitude':121.5319})
     def test_city_lookup_updates_weather_coordinates(self,mock):
         response=self.client.post(reverse('city_lookup'),{'city_query':'Taipei, Taiwan'})
         self.assertRedirects(response,reverse('profile'))
@@ -73,6 +73,7 @@ class BeforeBedTests(TestCase):
         self.assertEqual(profile.city,'Taipei, Taiwan')
         self.assertEqual(profile.latitude,25.0478)
         self.assertEqual(profile.longitude,121.5319)
+        self.assertEqual(profile.country_code,'TW')
         mock.assert_called_once_with('Taipei, Taiwan')
     @patch('planner.integrations.geocode_city',side_effect=IntegrationError('No matching city was found.'))
     def test_city_lookup_failure_keeps_saved_location(self,mock):
@@ -107,6 +108,29 @@ class BeforeBedTests(TestCase):
             self.assertFalse(storage.exists(name))
     def test_oauth_rejects_invalid_state(self):
         self.assertRedirects(self.client.get(reverse('google_callback'),{'state':'bad','code':'bad'}),reverse('login'))
+    @patch('planner.integrations.sync_calendar_event',return_value={'id':'google-event-123'})
+    def test_calendar_sync_creates_and_remembers_event(self,sync_mock):
+        profile,_=Profile.objects.get_or_create(user=self.user)
+        profile.bedtime=(timezone.localtime()+timedelta(hours=2)).time()
+        profile.save(update_fields=['bedtime'])
+        session=self.client.session; session['google_access_token']='token'; session.save()
+        response=self.client.post(reverse('calendar_sync'))
+        self.assertRedirects(response,reverse('dashboard'))
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.google_event_id,'google-event-123')
+        sync_mock.assert_called_once()
+    @patch('planner.integrations.public_holidays',return_value=[])
+    def test_day_context_uses_holiday_api(self,holiday_mock):
+        response=self.client.get(reverse('day_context'))
+        self.assertEqual(response.status_code,200)
+        holiday_mock.assert_called()
+    @patch('planner.integrations.send_email',return_value={'id':'email-id'})
+    def test_resend_test_reminder(self,email_mock):
+        self.user.email='student@example.com'; self.user.save(update_fields=['email'])
+        response=self.client.post(reverse('reminder_test'))
+        self.assertRedirects(response,reverse('dashboard'))
+        email_mock.assert_called_once()
+        self.assertEqual(email_mock.call_args.args[0],'student@example.com')
     def test_registration(self):
         self.client.logout()
         response=self.client.post(reverse('register'),{'username':'newstudent','password1':'DifferentSecure482!','password2':'DifferentSecure482!'})

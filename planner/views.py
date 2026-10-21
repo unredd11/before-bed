@@ -1,4 +1,5 @@
 import os,secrets,urllib.parse,json
+from datetime import datetime, timedelta
 from datetime import timezone as datetime_timezone
 from pathlib import Path
 from django.http import HttpResponse
@@ -56,7 +57,8 @@ def city_lookup(request):
         parts=[place.get('name'),place.get('admin1'),place.get('country')]
         profile.city=', '.join(dict.fromkeys(part for part in parts if part))
         profile.latitude=place['latitude']; profile.longitude=place['longitude']
-        profile.save(update_fields=['city','latitude','longitude'])
+        profile.country_code=(place.get('country_code') or profile.country_code).upper()
+        profile.save(update_fields=['city','country_code','latitude','longitude'])
         messages.success(request,f"Location updated to {profile.city}.")
     except api.IntegrationError as exc:
         messages.error(request,str(exc))
@@ -146,17 +148,89 @@ def weather(request):
         return render(request,'weather.html',{'rows':rows,'profile':profile})
     except (api.IntegrationError,KeyError):
         messages.error(request,'Weather is unavailable. Your tasks and checklist still work.'); return redirect('dashboard')
+
+@login_required
+def day_context(request):
+    profile,_=Profile.objects.get_or_create(user=request.user)
+    now=timezone.localtime()
+    holidays=[]; errors=[]
+    try:
+        cutoff=now.date()+timedelta(days=60)
+        holidays=[item for item in api.public_holidays(profile.country_code,now.year) if now.date() <= datetime.fromisoformat(item['date']).date() <= cutoff]
+        if cutoff.year!=now.year:
+            holidays += [item for item in api.public_holidays(profile.country_code,cutoff.year) if now.date() <= datetime.fromisoformat(item['date']).date() <= cutoff]
+        holidays.sort(key=lambda item:item['date'])
+    except (api.IntegrationError,KeyError,ValueError) as exc:
+        errors.append(str(exc) if isinstance(exc,api.IntegrationError) else 'Public holidays returned an unexpected response.')
+    return render(request,'day_context.html',{'profile':profile,'holidays':holidays,'errors':errors})
+
+@login_required
+@require_POST
+def reminder_test(request):
+    if not request.user.email:
+        messages.error(request,'Save your email address under My routine before sending a reminder.')
+        return redirect('profile')
+    profile,_=Profile.objects.get_or_create(user=request.user)
+    plan=make_plan(Task.objects.filter(user=request.user,completed=False),profile.bedtime)
+    body=_plan_text(plan)+'\nThis is a test reminder from BeforeBed.'
+    try:
+        api.send_email(request.user.email,'BeforeBed test reminder',body)
+        messages.success(request,f'A test reminder was sent to {request.user.email}.')
+    except api.IntegrationError as exc:
+        messages.error(request,str(exc))
+    return redirect('dashboard')
+from datetime import datetime
+
 @login_required
 def calendar(request):
+    token = request.session.get('google_access_token')
+    if not token: 
+        messages.info(request, 'Connect Google to view your calendar.')
+        return redirect('google_start')
+        
+    try: 
+        events = api.calendar_events(token)
+        # Parse Google's ISO strings into Python datetime/date objects
+        for event in events:
+            if 'dateTime' in event.get('start', {}):
+                event['start']['dateTime'] = datetime.fromisoformat(
+                    event['start']['dateTime'].replace('Z', '+00:00')
+                )
+            elif 'date' in event.get('start', {}):
+                event['start']['date'] = datetime.strptime(
+                    event['start']['date'], '%Y-%m-%d'
+                ).date()
+    except api.IntegrationError as exc: 
+        messages.error(request, str(exc))
+        return redirect('dashboard')
+        
+    return render(request, 'calendar.html', {'events': events})
+@login_required
+@require_POST
+def calendar_sync(request):
     token=request.session.get('google_access_token')
-    if not token: messages.info(request,'Connect Google to view your calendar.'); return redirect('google_start')
-    try: events=api.calendar_events(token)
-    except api.IntegrationError as exc: messages.error(request,str(exc)); return redirect('dashboard')
-    return render(request,'calendar.html',{'events':events})
+    if not token:
+        messages.info(request,'Connect Google before syncing your plan.'); return redirect('google_start')
+    profile,_=Profile.objects.get_or_create(user=request.user)
+    plan=make_plan(Task.objects.filter(user=request.user,completed=False),profile.bedtime)
+    if not plan['tonight']:
+        messages.info(request,'No incomplete tasks currently fit in tonight’s plan, so there is nothing to sync.')
+        return redirect('dashboard')
+    synced=0
+    try:
+        for row in plan['tonight']:
+            task=row['task']
+            event=api.sync_calendar_event(token,task,row['start'],row['end'])
+            task.google_event_id=event['id']; task.save(update_fields=['google_event_id'])
+            synced+=1
+        messages.success(request,f'{synced} task event(s) synced to Google Calendar.')
+    except (api.IntegrationError,KeyError):
+        messages.error(request,'Calendar sync needs edit permission. Click Connect Google again and approve Calendar access.')
+    return redirect('dashboard')
 def google_start(request):
     try:
         state=secrets.token_urlsafe(32); request.session['oauth_state']=state
-        query=urllib.parse.urlencode({'client_id':api.required('GOOGLE_CLIENT_ID'),'redirect_uri':api.required('GOOGLE_REDIRECT_URI'),'response_type':'code','scope':'openid email profile https://www.googleapis.com/auth/calendar.events.readonly','state':state,'prompt':'consent'})
+        query=urllib.parse.urlencode({'client_id':api.required('GOOGLE_CLIENT_ID'),'redirect_uri':api.required('GOOGLE_REDIRECT_URI'),'response_type':'code','scope':'openid email profile https://www.googleapis.com/auth/calendar.events','state':state,'prompt':'consent','include_granted_scopes':'true'})
         return redirect('https://accounts.google.com/o/oauth2/v2/auth?'+query)
     except api.IntegrationError as exc: messages.error(request,str(exc)); return redirect('login')
 def google_callback(request):

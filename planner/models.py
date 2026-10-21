@@ -9,6 +9,7 @@ class Profile(models.Model):
     user=models.OneToOneField(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
     bedtime=models.TimeField(default=time(0,30))
     city=models.CharField(max_length=80,blank=True)
+    country_code=models.CharField(max_length=2,default='SG')
     latitude=models.FloatField(default=1.3521,validators=[MinValueValidator(-90),MaxValueValidator(90)])
     longitude=models.FloatField(default=103.8198,validators=[MinValueValidator(-180),MaxValueValidator(180)])
     google_subject=models.CharField(max_length=255,unique=True,null=True,blank=True)
@@ -20,6 +21,7 @@ class Task(models.Model):
     priority=models.IntegerField(choices=[(1,'High'),(2,'Medium'),(3,'Low')],default=2)
     completed=models.BooleanField(default=False)
     photo_url=models.FileField(upload_to='task_photos/',blank=True,validators=[FileExtensionValidator(['jpg','jpeg','png','webp'])])
+    google_event_id=models.CharField(max_length=255,blank=True)
     def __str__(self): return self.title
 class ChecklistItem(models.Model):
     user=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)

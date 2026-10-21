@@ -8,7 +8,7 @@ class TaskForm(forms.ModelForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model=Profile
-        fields=['bedtime','city','latitude','longitude']
+        fields=['bedtime','city','country_code','latitude','longitude']
         widgets={'bedtime':forms.TimeInput(attrs={'type':'time'})}
 class SleepForm(forms.ModelForm):
     class Meta:
