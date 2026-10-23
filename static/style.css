@@ -430,3 +430,72 @@ hr {
     font-size: 13px;
   }
 }
+.action-nav {
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 18px;
+  margin: 28px 0;
+  background: #fffdf9;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.nav-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.nav-label {
+  width: 100%;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.nav-primary,
+.nav-button,
+.nav-reminder {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.nav-primary {
+  background: var(--green);
+  color: white;
+}
+
+.nav-button {
+  background: #edf0e8;
+  color: var(--green);
+}
+
+.nav-reminder {
+  background: #f2e8c9;
+  color: #735b20;
+}
+
+@media (max-width: 760px) {
+  .action-nav,
+  .nav-group {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .nav-group,
+  .nav-primary,
+  .nav-button,
+  .nav-reminder,
+  .nav-group a {
+    width: 100%;
+  }
+}
