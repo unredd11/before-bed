@@ -499,3 +499,98 @@ hr {
     width: 100%;
   }
 }
+/* Compact task lists */
+.task {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 18px;
+  padding: 13px 0;
+}
+
+.task h3 {
+  margin: 4px 0;
+  font-size: 15px;
+}
+
+.task small {
+  font-size: 11px;
+}
+
+.task .tag {
+  font-size: 10px;
+  padding: 3px 6px;
+}
+
+.task .reason {
+  margin: 4px 0;
+  font-size: 11px;
+}
+
+.task .actions {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.task .actions button,
+.task .actions a {
+  padding: 5px 8px;
+  font-size: 11px;
+}
+
+.task details {
+  grid-column: 1 / -1;
+  margin-top: 2px;
+  font-size: 11px;
+}
+
+.card {
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.card h2 {
+  font-size: 17px;
+  margin-bottom: 8px;
+}
+
+.card > .muted {
+  font-size: 11px;
+  margin: 4px 0 8px;
+}
+
+.item {
+  padding: 10px 0;
+  font-size: 12px;
+}
+
+.item small {
+  font-size: 10px;
+}
+
+@media (max-width: 700px) {
+  .task {
+    display: block;
+  }
+
+  .task .actions {
+    margin-top: 8px;
+    justify-content: flex-start;
+  }
+}
+.compact-card {
+  max-height: 620px;
+  overflow-y: auto;
+}
+
+.compact-card::-webkit-scrollbar {
+  width: 6px;
+}
+
+.compact-card::-webkit-scrollbar-thumb {
+  background: #cbd5c4;
+  border-radius: 10px;
+}
