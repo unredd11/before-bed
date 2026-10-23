@@ -26,12 +26,36 @@ def dashboard(request):
     tasks=Task.objects.filter(user=request.user,completed=False)
     plan=make_plan(tasks,profile.bedtime)
     return render(request,'dashboard.html',{'plan':plan,'profile':profile,'completed':Task.objects.filter(user=request.user,completed=True),'checklist':ChecklistItem.objects.filter(user=request.user),'checkform':ChecklistForm(),'sleep':SleepEntry.objects.filter(user=request.user).order_by('-slept_at')[:7],'google_enabled':bool(os.environ.get('GOOGLE_CLIENT_ID'))})
+
+def _sync_saved_task(request,task):
+    token=request.session.get('google_access_token')
+    if not token or task.completed:
+        return
+    profile,_=Profile.objects.get_or_create(user=request.user)
+    plan=make_plan(Task.objects.filter(user=request.user,completed=False),profile.bedtime)
+    row=next((row for row in plan['tonight'] if row['task'].pk==task.pk),None)
+    if not row:
+        messages.info(request,'Task saved locally. It is not in tonight\'s plan, so no Google Calendar event was created.')
+        return
+    try:
+        event=api.sync_calendar_event(token,task,row['start'],row['end'])
+        task.google_event_id=event['id']
+        task.save(update_fields=['google_event_id'])
+        messages.success(request,'Task saved and synced to Google Calendar.')
+    except (api.IntegrationError,KeyError):
+        messages.warning(request,'Task saved locally, but Google Calendar sync failed. Reconnect Google or use Sync plan.')
+
 @login_required
 def task_edit(request,pk=None):
     task=get_object_or_404(Task,pk=pk,user=request.user) if pk else None
     form=TaskForm(request.POST or None,instance=task)
     if request.method=='POST' and form.is_valid():
-        obj=form.save(commit=False); obj.user=request.user; obj.save(); messages.success(request,'Task saved.'); return redirect('dashboard')
+        obj=form.save(commit=False); obj.user=request.user; obj.save()
+        if request.session.get('google_access_token') and not obj.completed:
+            _sync_saved_task(request,obj)
+        else:
+            messages.success(request,'Task saved.')
+        return redirect('dashboard')
     return render(request,'form.html',{'form':form,'title':'Edit task' if pk else 'Add a task'})
 @login_required
 @require_POST

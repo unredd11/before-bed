@@ -34,6 +34,39 @@ class BeforeBedTests(TestCase):
         self.client.post(reverse('task_edit',args=[task.pk]),data)
         task.refresh_from_db(); self.assertEqual(task.title,'Pack uniform')
         self.client.post(reverse('task_delete',args=[task.pk])); self.assertFalse(Task.objects.filter(pk=task.pk).exists())
+
+    @patch('planner.integrations.sync_calendar_event',return_value={'id':'automatic-event-123'})
+    def test_task_save_automatically_syncs_when_google_is_connected(self,sync_mock):
+        self.task.completed=True; self.task.save(update_fields=['completed'])
+        profile,_=Profile.objects.get_or_create(user=self.user)
+        profile.bedtime=(timezone.localtime()+timedelta(hours=2)).time()
+        profile.save(update_fields=['bedtime'])
+        session=self.client.session; session['google_access_token']='token'; session.save()
+        data={'title':'Pack documents','deadline':(timezone.localtime()+timedelta(hours=1)).strftime('%Y-%m-%dT%H:%M'),'minutes':15,'priority':1}
+        response=self.client.post(reverse('task_add'),data)
+        self.assertRedirects(response,reverse('dashboard'))
+        task=Task.objects.get(title='Pack documents')
+        self.assertEqual(task.google_event_id,'automatic-event-123')
+        sync_mock.assert_called_once()
+
+    @patch('planner.integrations.sync_calendar_event')
+    def test_task_save_without_google_still_saves_locally(self,sync_mock):
+        data={'title':'Local task','deadline':(timezone.localtime()+timedelta(hours=1)).strftime('%Y-%m-%dT%H:%M'),'minutes':15,'priority':1}
+        self.client.post(reverse('task_add'),data)
+        self.assertTrue(Task.objects.filter(user=self.user,title='Local task').exists())
+        sync_mock.assert_not_called()
+
+    @patch('planner.integrations.sync_calendar_event',side_effect=IntegrationError('offline'))
+    def test_calendar_failure_does_not_undo_saved_task(self,sync_mock):
+        self.task.completed=True; self.task.save(update_fields=['completed'])
+        profile,_=Profile.objects.get_or_create(user=self.user)
+        profile.bedtime=(timezone.localtime()+timedelta(hours=2)).time()
+        profile.save(update_fields=['bedtime'])
+        session=self.client.session; session['google_access_token']='token'; session.save()
+        data={'title':'Saved before sync','deadline':(timezone.localtime()+timedelta(hours=1)).strftime('%Y-%m-%dT%H:%M'),'minutes':15,'priority':1}
+        response=self.client.post(reverse('task_add'),data,follow=True)
+        self.assertTrue(Task.objects.filter(user=self.user,title='Saved before sync').exists())
+        self.assertContains(response,'Task saved locally, but Google Calendar sync failed.')
     def test_mutations_require_post(self):
         self.assertEqual(self.client.get(reverse('task_delete',args=[self.task.pk])).status_code,405)
     def test_csrf_protected(self):
