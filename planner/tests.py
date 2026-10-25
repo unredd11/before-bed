@@ -156,6 +156,7 @@ class BeforeBedTests(TestCase):
     def test_day_context_uses_holiday_api(self,holiday_mock):
         response=self.client.get(reverse('day_context'))
         self.assertEqual(response.status_code,200)
+        self.assertContains(response,'Days to plan around')
         holiday_mock.assert_called()
     @patch('planner.integrations.send_email',return_value={'id':'email-id'})
     def test_resend_test_reminder(self,email_mock):

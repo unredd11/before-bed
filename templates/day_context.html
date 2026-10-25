@@ -1,16 +1,42 @@
 {% extends 'base.html' %}
 {% block content %}
-<section class="card formcard">
-  <p class="eyebrow">PLAN AROUND THE DAY</p>
-  <h1>Holiday context</h1>
-  <p>For {{ profile.city|default:'your saved location' }} ({{ profile.country_code }}).</p>
+<section class="holiday-page">
+  <header class="holiday-hero">
+    <div>
+      <p class="eyebrow">LOOK AHEAD</p>
+      <h1>Days to plan around</h1>
+      <p class="holiday-location">Upcoming public holidays near <strong>{{ profile.city|default:'your saved location' }}</strong> · {{ profile.country_code }}</p>
+    </div>
+    <div class="holiday-summary" aria-label="Upcoming holiday count">
+      <strong>{{ holidays|length }}</strong>
+      <span>in the next<br>60 days</span>
+    </div>
+  </header>
+
   {% for error in errors %}<div class="notice">{{ error }}</div>{% endfor %}
 
-  <h2>Public holidays in the next 60 days</h2>
-  {% for holiday in holidays %}
-    <div class="item"><strong>{{ holiday.name }}</strong><span>{{ holiday.date }}</span></div>
-  {% empty %}<p class="muted">No public holidays were found in the next 60 days.</p>{% endfor %}
+  <div class="holiday-list">
+    {% for holiday in holidays %}
+      <article class="holiday-row">
+        <time class="date-tile" datetime="{{ holiday.date }}">
+          <span>{{ holiday.date_value|date:'M' }}</span>
+          <strong>{{ holiday.date_value|date:'j' }}</strong>
+        </time>
+        <div class="holiday-copy">
+          <span class="holiday-type">Public holiday</span>
+          <h2>{{ holiday.name }}</h2>
+          <p>{{ holiday.date_value|date:'l, F j, Y' }} · {{ holiday.days_until }} day{{ holiday.days_until|pluralize }} away</p>
+        </div>
+      </article>
+    {% empty %}
+      <div class="holiday-empty">
+        <span aria-hidden="true">☀</span>
+        <h2>No upcoming public holidays</h2>
+        <p>Your next 60 days are clear based on your saved country.</p>
+      </div>
+    {% endfor %}
+  </div>
 
-  <small>Holiday data: Nager.Date.</small>
+  <footer class="holiday-source">Holiday information provided by Nager.Date.</footer>
 </section>
 {% endblock %}

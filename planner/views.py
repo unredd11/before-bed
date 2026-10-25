@@ -184,6 +184,9 @@ def day_context(request):
         if cutoff.year!=now.year:
             holidays += [item for item in api.public_holidays(profile.country_code,cutoff.year) if now.date() <= datetime.fromisoformat(item['date']).date() <= cutoff]
         holidays.sort(key=lambda item:item['date'])
+        for holiday in holidays:
+            holiday['date_value']=datetime.fromisoformat(holiday['date']).date()
+            holiday['days_until']=(holiday['date_value']-now.date()).days
     except (api.IntegrationError,KeyError,ValueError) as exc:
         errors.append(str(exc) if isinstance(exc,api.IntegrationError) else 'Public holidays returned an unexpected response.')
     return render(request,'day_context.html',{'profile':profile,'holidays':holidays,'errors':errors})

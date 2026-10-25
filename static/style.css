@@ -620,3 +620,156 @@ hr {
     max-height: 330px;
   }
 }
+
+/* ---------- Days to plan around ---------- */
+.holiday-page {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.holiday-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 34px;
+  margin-bottom: 18px;
+  border: 1px solid #d8dfd3;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #fffdf9 45%, #e8eee1 100%);
+}
+
+.holiday-hero h1 {
+  margin-bottom: 10px;
+}
+
+.holiday-location {
+  margin: 0;
+  color: var(--muted);
+}
+
+.holiday-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 170px;
+  padding: 18px 22px;
+  border: 1px solid #d4deca;
+  border-radius: 18px;
+  background: rgba(255, 253, 249, .78);
+}
+
+.holiday-summary strong {
+  font: 800 42px/1 Manrope, sans-serif;
+  color: var(--green);
+}
+
+.holiday-summary span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.holiday-list {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fffdf9;
+}
+
+.holiday-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.holiday-row:last-child {
+  border-bottom: 0;
+}
+
+.date-tile {
+  flex: 0 0 62px;
+  overflow: hidden;
+  border: 1px solid #d6dfd0;
+  border-radius: 13px;
+  text-align: center;
+  background: #f1f4ed;
+}
+
+.date-tile span {
+  display: block;
+  padding: 3px;
+  background: var(--green);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.date-tile strong {
+  display: block;
+  padding: 4px 0 6px;
+  font: 800 25px/1.2 Manrope, sans-serif;
+}
+
+.holiday-copy h2 {
+  margin: 3px 0;
+  font-size: 17px;
+}
+
+.holiday-copy p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.holiday-type {
+  color: #718167;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.holiday-empty {
+  padding: 50px 24px;
+  text-align: center;
+}
+
+.holiday-empty > span {
+  font-size: 30px;
+}
+
+.holiday-empty h2 {
+  margin-bottom: 4px;
+}
+
+.holiday-empty p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.holiday-source {
+  padding: 12px 4px;
+  text-align: right;
+}
+
+@media (max-width: 600px) {
+  .holiday-hero {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 24px;
+  }
+
+  .holiday-summary {
+    width: fit-content;
+  }
+
+  .holiday-row {
+    align-items: flex-start;
+    padding: 16px;
+  }
+}
