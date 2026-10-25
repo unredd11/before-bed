@@ -582,15 +582,41 @@ hr {
   }
 }
 .compact-card {
-  max-height: 620px;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
-.compact-card::-webkit-scrollbar {
+.scroll-list {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5c4 transparent;
+}
+
+.task-scroll {
+  max-height: 390px;
+}
+
+.completed-scroll {
+  max-height: 260px;
+}
+
+.scroll-list:focus-visible {
+  border-radius: 8px;
+}
+
+.scroll-list::-webkit-scrollbar {
   width: 6px;
 }
 
-.compact-card::-webkit-scrollbar-thumb {
+.scroll-list::-webkit-scrollbar-thumb {
   background: #cbd5c4;
   border-radius: 10px;
+}
+
+@media (max-width: 700px) {
+  .task-scroll,
+  .completed-scroll {
+    max-height: 330px;
+  }
 }
