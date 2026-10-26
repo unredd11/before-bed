@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="intro">
-  <div><p class="eyebrow">MAKE ROOM FOR REST</p><h1>Your evening,<br><em>with a little more space.</em></h1><p>Welcome, {{ user.username }}. Choose what matters tonight and prepare for tomorrow.</p></div>
+<div class="intro intro-target-only">
   <div class="target"><span>YOUR NEXT BEDTIME TARGET</span><strong>{{ plan.target|date:'g:i A' }}</strong><small>{{ plan.target|date:'D, M j' }} · {{ plan.remaining }} minutes unscheduled</small></div>
 </div>
 <nav class="action-nav" aria-label="BeforeBed actions">

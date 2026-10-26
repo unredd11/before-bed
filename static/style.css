@@ -130,6 +130,10 @@ main {
   margin-bottom: 28px;
 }
 
+.intro-target-only {
+  justify-content: flex-start;
+}
+
 /* ---------- Typography ---------- */
 h1 {
   font: 800 clamp(30px, 4vw, 46px) / 1.2 Manrope, sans-serif;
@@ -800,7 +804,12 @@ body {
 
 /* Header */
 header {
-  background: var(--navy-dark);
+  background: linear-gradient(
+    135deg,
+    var(--navy-dark) 0%,
+    var(--navy) 58%,
+    var(--blue) 100%
+  );
   color: var(--cream);
   border-bottom-color: var(--navy);
 }
@@ -880,6 +889,12 @@ button:hover,
 .nav-button {
   background: var(--soft-blue);
   color: var(--navy);
+  border-color: rgba(34, 57, 111, 0.25);
+}
+
+.logout-button {
+  background: var(--soft-blue);
+  color: white;
   border-color: rgba(34, 57, 111, 0.25);
 }
 
