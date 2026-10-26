@@ -773,3 +773,237 @@ hr {
     padding: 16px;
   }
 }
+/* ========================================
+   BeforeBed navy and cream color theme
+   ======================================== */
+
+:root {
+  --bg: #fff;;
+  --ink: #010736;
+  --muted: #52617f;
+  --green: #22396f;
+  --line: rgba(13, 28, 66, 0.18);
+
+  --navy-dark: #010736;
+  --navy: #0d1c42;
+  --blue: #22396f;
+  --cream: #fff;;
+  --surface: #fffaf0;
+  --soft-blue: rgba(34, 57, 111, 0.1);
+}
+
+/* Main page */
+body {
+  background: var(--cream);
+  color: var(--navy-dark);
+}
+
+/* Header */
+header {
+  background: var(--navy-dark);
+  color: var(--cream);
+  border-bottom-color: var(--navy);
+}
+
+header a,
+header .brand {
+  color: var(--cream);
+}
+
+.moon {
+  background: var(--blue);
+  color: var(--cream);
+}
+
+/* Main cards */
+.card,
+.action-nav,
+.holiday-list {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 8px 24px rgba(1, 7, 54, 0.06);
+}
+
+/* Titles and text */
+h1,
+h2,
+h3,
+strong {
+  color: var(--navy-dark);
+}
+
+h1 em,
+.eyebrow,
+.muted,
+small {
+  color: var(--blue);
+}
+
+a {
+  color: var(--blue);
+}
+
+a:hover {
+  color: var(--navy-dark);
+}
+
+/* Bedtime target */
+.target {
+  background: var(--navy);
+  border-color: var(--navy-dark);
+  color: var(--cream);
+}
+
+.target strong,
+.target span,
+.target small {
+  color: var(--cream);
+}
+
+/* Primary buttons */
+button,
+.button,
+.nav-primary {
+  background: var(--blue);
+  color: white;
+}
+
+button:hover,
+.button:hover,
+.nav-primary:hover {
+  background: var(--navy);
+  color: white;
+}
+
+/* Secondary buttons */
+.secondary,
+.nav-button {
+  background: var(--soft-blue);
+  color: var(--navy);
+  border-color: rgba(34, 57, 111, 0.25);
+}
+
+.secondary:hover,
+.nav-button:hover {
+  background: var(--blue);
+  color: white;
+}
+
+/* Reminder button */
+.nav-reminder {
+  background: var(--cream);
+  color: var(--navy-dark);
+  border: 1px solid rgba(13, 28, 66, 0.2);
+}
+
+.nav-reminder:hover {
+  background: var(--navy);
+  color: white;
+}
+
+/* Labels and counters */
+.count,
+.tag {
+  background: var(--soft-blue);
+  color: var(--navy);
+}
+
+.nav-label {
+  color: var(--blue);
+}
+
+/* Task and list separators */
+.task,
+.item,
+.print-row,
+hr {
+  border-color: var(--line);
+}
+
+/* Form fields */
+input,
+select,
+textarea {
+  background: #fffdf7;
+  color: var(--navy-dark);
+  border-color: rgba(34, 57, 111, 0.3);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--blue);
+  outline: 3px solid rgba(34, 57, 111, 0.14);
+}
+
+/* Messages */
+.notice {
+  background: rgba(34, 57, 111, 0.1);
+  color: var(--navy);
+  border-color: rgba(34, 57, 111, 0.2);
+}
+
+/* Scrollbars */
+.scroll-list {
+  scrollbar-color: var(--blue) transparent;
+}
+
+.scroll-list::-webkit-scrollbar-thumb {
+  background: var(--blue);
+}
+
+/* Days to plan around page */
+.holiday-hero {
+  background: linear-gradient(
+    135deg,
+    var(--navy-dark) 0%,
+    var(--navy) 58%,
+    var(--blue) 100%
+  );
+  border-color: var(--navy-dark);
+}
+
+.holiday-hero h1,
+.holiday-hero .eyebrow,
+.holiday-location,
+.holiday-location strong {
+  color: var(--cream);
+}
+
+.holiday-summary {
+  background: rgba(252, 241, 208, 0.12);
+  border-color: rgba(252, 241, 208, 0.3);
+}
+
+.holiday-summary strong,
+.holiday-summary span {
+  color: var(--cream);
+}
+
+.date-tile {
+  background: var(--cream);
+  border-color: rgba(34, 57, 111, 0.25);
+}
+
+.date-tile span {
+  background: var(--blue);
+  color: white;
+}
+
+.date-tile strong {
+  color: var(--navy-dark);
+}
+
+.holiday-type {
+  color: var(--blue);
+}
+
+/* Focus indicator */
+:focus-visible {
+  outline-color: var(--blue);
+}
+
+/* Footer */
+footer {
+  color: var(--navy);
+}
