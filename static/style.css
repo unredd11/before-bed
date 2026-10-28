@@ -1022,3 +1022,92 @@ textarea:focus {
 footer {
   color: var(--navy);
 }
+
+/* ---------- Sleep diary ---------- */
+.sleep-card {
+  padding-bottom: 14px;
+}
+
+.sleep-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sleep-heading h2,
+.sleep-heading p {
+  margin-top: 0;
+}
+
+.sleep-scroll {
+  max-height: 310px;
+  margin: 4px -4px 12px 0;
+  padding-right: 10px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.sleep-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 66px;
+  padding: 11px 2px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sleep-entry:last-child {
+  border-bottom: 0;
+}
+
+.sleep-entry strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 14px;
+}
+
+.sleep-entry small {
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.sleep-entry form {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.sleep-entry .text {
+  padding: 6px 8px;
+}
+
+.sleep-add {
+  display: inline-block;
+  padding: 7px 2px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.sleep-empty {
+  padding: 28px 4px;
+  text-align: center;
+}
+
+.sleep-empty p {
+  margin-bottom: 2px;
+}
+
+@media (max-width: 420px) {
+  .sleep-scroll {
+    max-height: 280px;
+  }
+
+  .sleep-entry {
+    align-items: flex-start;
+  }
+
+  .sleep-entry small {
+    white-space: normal;
+  }
+}

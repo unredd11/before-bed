@@ -25,7 +25,7 @@ def dashboard(request):
     profile,_=Profile.objects.get_or_create(user=request.user)
     tasks=Task.objects.filter(user=request.user,completed=False)
     plan=make_plan(tasks,profile.bedtime)
-    return render(request,'dashboard.html',{'plan':plan,'profile':profile,'completed':Task.objects.filter(user=request.user,completed=True),'checklist':ChecklistItem.objects.filter(user=request.user),'checkform':ChecklistForm(),'sleep':SleepEntry.objects.filter(user=request.user).order_by('-slept_at')[:7],'google_enabled':bool(os.environ.get('GOOGLE_CLIENT_ID'))})
+    return render(request,'dashboard.html',{'plan':plan,'profile':profile,'completed':Task.objects.filter(user=request.user,completed=True),'checklist':ChecklistItem.objects.filter(user=request.user),'checkform':ChecklistForm(),'sleep':SleepEntry.objects.filter(user=request.user).order_by('-slept_at'),'google_enabled':bool(os.environ.get('GOOGLE_CLIENT_ID'))})
 
 def _sync_saved_task(request,task):
     token=request.session.get('google_access_token')

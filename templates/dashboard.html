@@ -41,6 +41,12 @@
   <section class="card compact-card"><h2>Completed <span class="count">{{ completed|length }}</span></h2><div class="scroll-list completed-scroll" tabindex="0" aria-label="Completed tasks">{% for task in completed %}<div class="item"><strong>{{ task.title }}</strong><form method="post" action="{% url 'task_toggle' task.pk %}">{% csrf_token %}<button class="secondary">Reopen</button></form><a href="{% url 'task_edit' task.pk %}">Edit</a></div>{% empty %}<p class="muted">Finished tasks will appear here.</p>{% endfor %}</div></section>
 </div><aside>
   <section class="card compact-card"><p class="eyebrow">ONE LESS THING TOMORROW</p><h2>Morning checklist</h2>{% for item in checklist %}<div class="item"><form method="post" action="{% url 'checklist_action' item.pk 'toggle' %}">{% csrf_token %}<button class="secondary">{% if item.packed %}✓ Packed{% else %}Pack{% endif %}</button></form><span>{{ item.label }}</span><form method="post" action="{% url 'checklist_action' item.pk 'delete' %}">{% csrf_token %}<button class="text">Remove</button></form></div>{% empty %}<p class="muted">Add your uniform, charger, or assignment files.</p>{% endfor %}<form method="post" action="{% url 'checklist_add' %}">{% csrf_token %}{{ checkform.as_p }}<button>Add item</button></form></section>
-  <section class="card compact-card"><h2>Your sleep diary</h2><p class="muted">Your own bedtime and wake-up records.</p>{% for entry in sleep %}<div class="item"><div><strong>{{ entry.hours }} hours</strong><small>{{ entry.slept_at|date:'M j, g:i A' }} → {{ entry.woke_at|date:'M j, g:i A' }}</small></div><form method="post" action="{% url 'sleep_delete' entry.pk %}">{% csrf_token %}<button class="text">Remove</button></form></div>{% empty %}<p>No entries yet.</p>{% endfor %}<a href="{% url 'sleep_add' %}">+ Record a night</a></section>
+  <section class="card compact-card sleep-card">
+    <div class="sleep-heading"><div><h2>Your sleep diary</h2><p class="muted">Your bedtime and wake-up history.</p></div><span class="count">{{ sleep|length }}</span></div>
+    <div class="scroll-list sleep-scroll" tabindex="0" aria-label="Sleep diary entries">
+      {% for entry in sleep %}<div class="sleep-entry"><div><strong>{{ entry.hours }} hours</strong><small>{{ entry.slept_at|date:'M j, g:i A' }} → {{ entry.woke_at|date:'M j, g:i A' }}</small></div><form method="post" action="{% url 'sleep_delete' entry.pk %}">{% csrf_token %}<button class="text">Remove</button></form></div>{% empty %}<div class="sleep-empty"><p>No sleep records yet.</p><small>Record a night to begin your diary.</small></div>{% endfor %}
+    </div>
+    <a class="sleep-add" href="{% url 'sleep_add' %}">+ Record a night</a>
+  </section>
 </aside></div>
 {% endblock %}
