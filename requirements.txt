@@ -1,2 +1,4 @@
 Django>=6.0.1,<6.1
 gunicorn>=23,<24; platform_system != "Windows"
+psycopg[binary]>=3.2,<4; platform_system != "Windows"
+whitenoise>=6.9,<7

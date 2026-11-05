@@ -109,10 +109,21 @@ Tests cover task CRUD, ownership, CSRF, staff permissions, midnight scheduling, 
 - `templates/` and `static/`: interface.
 - `planner/tests.py`: tests.
 
+## Deploy on Render
+
+The project uses SQLite when `DATABASE_URL` is absent and PostgreSQL when Render supplies `DATABASE_URL`. Local SQLite data is not copied automatically into the hosted database; deploy migrations first, then create a hosted superuser using the Render Shell.
+
+1. Push the project to GitHub, then create a Render Blueprint from the repository (the included `render.yaml` creates the web service and PostgreSQL database).
+2. In the Render service environment, set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, and `RESEND_API_KEY`. Set the redirect URI to `https://YOUR-SERVICE.onrender.com/google/callback/` and add that exact URL to the Google OAuth client's authorized redirect URIs. Keep secrets in Render's environment settings, never in Git.
+3. If the generated Render hostname differs from `beforebed.onrender.com`, update `DJANGO_ALLOWED_HOSTS` to the actual hostname, without `https://`.
+4. After deployment, use the Render Shell to create an admin account with `python manage.py createsuperuser`.
+
+The database stores tasks, users, and sleep records persistently. Task photos are currently stored on the web service filesystem, which may be cleared during redeploys; attach a persistent disk or move uploads to object storage if photo persistence is required. Render PostgreSQL plan availability and pricing can change; select a database plan in the Render dashboard.
+
 ## Deployment and submission
 
 This local build is not yet an online deployment or a complete submission. Create your own GitHub/GitLab repository and make regular commits as you understand and extend the project. Follow your course rules about assistance and be ready to explain the code.
 
-On a Python-capable Linux host, install requirements, run migrations and `collectstatic`, then start `gunicorn config.wsgi:application`. Set `DJANGO_DEBUG=0`, a random `DJANGO_SECRET_KEY`, your host in `DJANGO_ALLOWED_HOSTS`, and an HTTPS Google callback in both Google Console and the app. Production settings require HTTPS. Arrange static-file serving through your host. SQLite requires persistent storage; PostgreSQL deployment requires additional driver and settings configuration. Hosting plan availability is not verified here.
+For other Python hosts, install requirements, run migrations and `collectstatic`, then start `gunicorn config.wsgi:application`. Set `DJANGO_DEBUG=0`, a random `DJANGO_SECRET_KEY`, your host in `DJANGO_ALLOWED_HOSTS`, and an HTTPS Google callback in both Google Console and the app. Production settings require HTTPS.
 
 Before submission: configure and demonstrate all five integrations, deploy online, document your design and objectives, and rehearse with your test accounts.
