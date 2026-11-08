@@ -22,10 +22,11 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'local-development-only-change-
 DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
 if not DEBUG and SECRET_KEY == 'local-development-only-change-before-deploying':
     raise RuntimeError('Set DJANGO_SECRET_KEY for production')
-ALLOWED_HOSTS = [host.strip() for host in os.environ.get(
-    'DJANGO_ALLOWED_HOSTS',
-    f"localhost,127.0.0.1,testserver,{os.environ.get('RENDER_EXTERNAL_HOSTNAME', '')}",
-).split(',') if host.strip()]
+_env_hosts = os.environ.get('DJANGO_ALLOWED_HOSTS', '')
+_render_host = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '')
+ALLOWED_HOSTS = list(dict.fromkeys(
+    [h.strip() for h in f"localhost,127.0.0.1,testserver,before-bed.onrender.com,{_render_host},{_env_hosts}".split(',') if h.strip()] + ['.onrender.com']
+))
 INSTALLED_APPS = ['django.contrib.admin','django.contrib.auth','django.contrib.contenttypes','django.contrib.sessions','django.contrib.messages','django.contrib.staticfiles','planner']
 MIDDLEWARE = ['django.middleware.security.SecurityMiddleware','whitenoise.middleware.WhiteNoiseMiddleware','django.contrib.sessions.middleware.SessionMiddleware','django.middleware.common.CommonMiddleware','django.middleware.csrf.CsrfViewMiddleware','django.contrib.auth.middleware.AuthenticationMiddleware','django.contrib.messages.middleware.MessageMiddleware','django.middleware.clickjacking.XFrameOptionsMiddleware']
 ROOT_URLCONF = 'config.urls'
@@ -67,9 +68,11 @@ LOGIN_URL='login'
 LOGIN_REDIRECT_URL='dashboard'
 LOGOUT_REDIRECT_URL='login'
 if not DEBUG:
-    CSRF_TRUSTED_ORIGINS = [f"https://{host.strip()}" for host in os.environ.get(
-        'DJANGO_ALLOWED_HOSTS', os.environ.get('RENDER_EXTERNAL_HOSTNAME', '')
-    ).split(',') if host.strip()]
+    CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(
+        [f"https://{h}" for h in ALLOWED_HOSTS if not h.startswith('.')] +
+        ['https://*.onrender.com', 'https://before-bed.onrender.com']
+    ))
     SESSION_COOKIE_SECURE=True
     CSRF_COOKIE_SECURE=True
-    SECURE_SSL_REDIRECT=True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True

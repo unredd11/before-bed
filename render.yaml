@@ -11,7 +11,7 @@ services:
       - key: DJANGO_SECRET_KEY
         generateValue: true
       - key: DJANGO_ALLOWED_HOSTS
-        value: beforebed.onrender.com
+        value: before-bed.onrender.com
       - key: DATABASE_URL
         fromDatabase:
           name: beforebed-db
