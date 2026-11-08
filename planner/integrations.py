@@ -29,13 +29,45 @@ def required(name):
     return value
 def weather(profile):
     query=urllib.parse.urlencode({'latitude':profile.latitude,'longitude':profile.longitude,'daily':'precipitation_probability_max,temperature_2m_max','forecast_days':2,'timezone':'auto'})
-    return call('https://api.open-meteo.com/v1/forecast?'+query)['daily']
+    try:
+        return call('https://api.open-meteo.com/v1/forecast?'+query)['daily']
+    except IntegrationError as exc:
+        if '429' in str(exc):
+            try:
+                wttr=call(f'https://wttr.in/{profile.latitude},{profile.longitude}?format=j1')
+                w=wttr.get('weather',[])
+                if w:
+                    return {
+                        'time': [d['date'] for d in w[:2]],
+                        'temperature_2m_max': [float(d['maxtempC']) for d in w[:2]],
+                        'precipitation_probability_max': [int(max([float(h.get('chanceofrain',0)) for h in d.get('hourly',[])] or [0])) for d in w[:2]],
+                    }
+            except Exception: pass
+        raise
 def geocode_city(name):
     name=name.strip()
     if len(name)<2:
         raise IntegrationError('Enter at least two characters for the city name.')
     query=urllib.parse.urlencode({'name':name,'count':1,'language':'en','format':'json'})
-    results=call('https://geocoding-api.open-meteo.com/v1/search?'+query).get('results',[])
+    try:
+        results=call('https://geocoding-api.open-meteo.com/v1/search?'+query).get('results',[])
+    except IntegrationError as exc:
+        if '429' in str(exc):
+            try:
+                nom_query=urllib.parse.urlencode({'q':name,'format':'json','limit':1,'addressdetails':1})
+                nom=call('https://nominatim.openstreetmap.org/search?'+nom_query)
+                if nom:
+                    item=nom[0]; addr=item.get('address',{})
+                    return {
+                        'name': item.get('display_name','').split(',')[0],
+                        'admin1': addr.get('state') or addr.get('region'),
+                        'country': addr.get('country'),
+                        'country_code': addr.get('country_code','').upper(),
+                        'latitude': float(item['lat']),
+                        'longitude': float(item['lon']),
+                    }
+            except Exception: pass
+        raise
     if not results:
         raise IntegrationError('No matching city was found. Try adding the country name.')
     place=results[0]
