@@ -11,7 +11,11 @@ def call(url,data=None,headers=None,method=None):
     except urllib.error.HTTPError as exc:
         raw=exc.read().decode('utf-8','replace')
         try:
-            detail=json.loads(raw).get('message') or json.loads(raw).get('error')
+            parsed = json.loads(raw)
+            if isinstance(parsed, dict) and isinstance(parsed.get('error'), dict):
+                detail = parsed['error'].get('message')
+            else:
+                detail = parsed.get('message') or parsed.get('error')
         except (json.JSONDecodeError,AttributeError):
             detail=raw.strip()
         message=f'The external service rejected the request ({exc.code}).'
