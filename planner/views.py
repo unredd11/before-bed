@@ -170,8 +170,11 @@ def weather(request):
     try:
         daily=api.weather(profile); rows=list(zip(daily['time'],daily['temperature_2m_max'],daily['precipitation_probability_max']))
         return render(request,'weather.html',{'rows':rows,'profile':profile})
-    except (api.IntegrationError,KeyError):
-        messages.error(request,'Weather is unavailable. Your tasks and checklist still work.'); return redirect('dashboard')
+    except (api.IntegrationError,KeyError) as exc:
+        print(f'Weather error: {repr(exc)}', flush=True)
+        reason = str(exc) if isinstance(exc, api.IntegrationError) else 'Unexpected data format.'
+        messages.error(request, f'Weather is unavailable: {reason} Your tasks and checklist still work.')
+        return redirect('dashboard')
 
 @login_required
 def day_context(request):
