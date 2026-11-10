@@ -1,11 +1,14 @@
 {% extends 'base.html' %}
+
 {% block content %}
 <section class="holiday-page">
   <header class="holiday-hero">
     <div>
       <p class="eyebrow">LOOK AHEAD</p>
       <h1>Days to plan around</h1>
-      <p class="holiday-location">Upcoming public holidays near <strong>{{ profile.city|default:'your saved location' }}</strong> · {{ profile.country_code }}</p>
+      <p class="holiday-location">
+        Upcoming public holidays near <strong>{{ profile.city|default:'your saved location' }}</strong> · {{ profile.country_code }}
+      </p>
     </div>
     <div class="holiday-summary" aria-label="Upcoming holiday count">
       <strong>{{ holidays|length }}</strong>
@@ -13,7 +16,9 @@
     </div>
   </header>
 
-  {% for error in errors %}<div class="notice">{{ error }}</div>{% endfor %}
+  {% for error in errors %}
+    <div class="notice">{{ error }}</div>
+  {% endfor %}
 
   <div class="holiday-list">
     {% for holiday in holidays %}
